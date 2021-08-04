@@ -1,1 +1,1 @@
-# ls-js120
+# Launch School - JS120 Object Oriented Programming with JavaScript
