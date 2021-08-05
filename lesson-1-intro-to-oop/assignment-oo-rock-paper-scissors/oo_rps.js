@@ -1,10 +1,33 @@
-function createPlayer() {
+const readline = require('readline-sync');
+
+function createPlayer(playerType) {
   return {
     // possible state: player name?
     // possible state: player's current move?
+    playerType: playerType,
+    move: null,
 
     choose() {
-      // not yet implemented
+      if (this.isHuman()) {
+        let choice;
+
+        while (true) {
+          console.log('Please choose rock, paper, or scissors:');
+          choice = readline.question();
+          if (['rock', 'paper', 'scissors'].includes(choice)) break;
+          console.log('Sorry, invalid choice.');
+        }
+
+        this.move = choice;
+      } else {
+        const choices = ['rock', 'paper', 'scissors'];
+        let randomIndex = Math.floor(Math.random() * choices.length);
+        this.move = choices[randomIndex];
+      }
+    },
+
+    isHuman() {
+      return this.playerType === 'human';
     },
   };
 }
@@ -27,17 +50,25 @@ let compare = function(move1, move2) {
   // not yet implemented
 };
 
-RPSGame.play();
-
 const RPSGame = {
-  human: createPlayer(),
-  computer: createPlayer(),
+  human: createPlayer('human'),
+  computer: createPlayer('computer'),
+
+  displayWelcomeMessage() {
+    console.log('Welcome to Rock, Paper, Scissors!');
+  },
+
+  displayGoodbyeMessage() {
+    console.log('Thanks for playing Rock, Paper, Scissors. Goodbye!');
+  },
 
   play() {
-    displayWelcomeMessage();
+    this.displayWelcomeMessage();
     this.human.choose();
     this.computer.choose();
     displayWinner();
-    displayGoodbyeMessage();
+    this.displayGoodbyeMessage();
   },
 };
+
+RPSGame.play();
