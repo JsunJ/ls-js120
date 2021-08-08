@@ -2,8 +2,6 @@ const readline = require('readline-sync');
 
 function createPlayer(playerType) {
   return {
-    // possible state: player name?
-    // possible state: player's current move?
     playerType: playerType,
     move: null,
 
@@ -31,24 +29,6 @@ function createPlayer(playerType) {
     },
   };
 }
-
-function createMove() {
-  return {
-    // possible state: type of move (paper, rock, scissors)
-  };
-}
-
-function createRule() {
-  return {
-    // possible state? not clear whether Rules need state
-  };
-}
-
-// Since we don't yet know where to put `compare`, let's define
-// it as an ordinary function.
-let compare = function(move1, move2) {
-  // not yet implemented
-};
 
 const RPSGame = {
   human: createPlayer('human'),
@@ -78,15 +58,25 @@ const RPSGame = {
     }
   },
 
+  playAgain() {
+    console.log('Would you like to play again? (y/n)');
+    let answer = readline.question();
+    return answer.toLowerCase()[0] === 'y';
+  },
+
   displayGoodbyeMessage() {
     console.log('Thanks for playing Rock, Paper, Scissors. Goodbye!');
   },
 
   play() {
     this.displayWelcomeMessage();
-    this.human.choose();
-    this.computer.choose();
-    this.displayWinner();
+    while (true) {
+      this.human.choose();
+      this.computer.choose();
+      this.displayWinner();
+      if (!this.playAgain()) break;
+    }
+    
     this.displayGoodbyeMessage();
   },
 };
