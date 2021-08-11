@@ -87,7 +87,7 @@ const RPSGame = {
       this.displayWinner();
       if (!this.playAgain()) break;
     }
-    
+
     this.displayGoodbyeMessage();
   },
 };
