@@ -157,3 +157,9 @@ const RPSGame = {
 };
 
 RPSGame.play();
+
+// TO DO
+/*
+  factory functions for moves
+  shorthand for moves
+*/
