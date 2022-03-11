@@ -112,25 +112,54 @@ class TTTGame {
     this.computer = new Computer();
   }
 
-  play() {
+  start() {
     console.clear();
     this.displayWelcomeMessage();
 
     while (true) {
-      this.board.display();
-
-      this.humanMoves();
-      if (this.gameOver()) break;
-
-      this.computerMoves();
-      if (this.gameOver()) break;
-
+      this.playRound();
+      if (!this.playAgain()) break;
       console.clear();
       console.log('');
     }
 
-    this.displayResults();
     this.displayGoodbyeMessage();
+  }
+
+  playRound() {
+    while (true) {
+      this.board.display();
+
+      this.humanMoves();
+      console.clear();
+      console.log('');
+      if (this.gameOver()) break;
+
+      this.computerMoves();
+      console.clear();
+      console.log('');
+      if (this.gameOver()) break;
+    }
+
+    this.board.display();
+    this.displayResults();
+  }
+
+  playAgain() {
+    let choice = readline.question('Would you play to play again? (Y/N): ').toLowerCase();
+    while (choice !== 'y' && choice !== 'n') {
+      choice = readline.question('Invalid Response. Please enter "Y" to play again or "N" to exit.: ').toLowerCase();
+    }
+
+    if (choice === 'y') {
+      this.resetBoard();
+    }
+
+    return choice === 'y';
+  }
+
+  resetBoard() {
+    this.board = new Board();
   }
 
   displayWelcomeMessage() {
@@ -151,12 +180,21 @@ class TTTGame {
     }
   }
 
+  joinOr(arr, delimiter = ', ', joinWord = 'or') {
+    switch (arr.length) {
+      case 1: return arr[0];
+      case 2: return arr.join(` ${joinWord} `);
+      default: return arr.slice(0, arr.length - 1).join(delimiter) +
+                      `${delimiter}${joinWord} ${arr[arr.length - 1]}`;
+    }
+  }
+
   humanMoves() {
     let choice;
 
     while (true) {
       let validChoices = this.board.unusedSquares();
-      const prompt = `Choose a square (${validChoices.join(", ")}): `;
+      const prompt = `Choose a square (${this.joinOr(validChoices)}): `;
       choice = readline.question(prompt);
 
       if (validChoices.includes(choice)) break;
@@ -195,4 +233,4 @@ class TTTGame {
 }
 
 let game = new TTTGame();
-game.play();
+game.start();
