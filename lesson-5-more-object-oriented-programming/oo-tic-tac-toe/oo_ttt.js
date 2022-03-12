@@ -119,12 +119,13 @@ class TTTGame {
     this.human = new Human();
     this.computer = new Computer();
     this.scores = {};
+    this.firstPlayer = this.human;
   }
 
   start() {
     console.clear();
     this.displayWelcomeMessage();
-    if (this.promptToStart() === 'q') return;
+    if (['q', 'quit'].includes(this.promptToStart())) return;
 
     this.playMatch();
 
@@ -140,24 +141,21 @@ class TTTGame {
       if (this.scoreLimitReached() || !this.playAgain()) {
         break;
       }
+      this.firstPlayer = this.togglePlayer(this.firstPlayer);
     }
 
-    if (this.scoreLimitReached()) {
-      this.displayMatchResult();
-    }
+    this.displayMatchResult();
   }
 
   playRound() {
+    let currentPlayer = this.firstPlayer;
     while (true) {
       this.refreshDisplay();
 
-      this.humanMoves();
+      this.playerMoves(currentPlayer);
       this.refreshDisplay();
       if (this.gameOver()) break;
-
-      this.computerMoves();
-      this.refreshDisplay();
-      if (this.gameOver()) break;
+      currentPlayer = this.togglePlayer(currentPlayer);
     }
 
     this.updateScores();
@@ -167,15 +165,15 @@ class TTTGame {
 
   playAgain() {
     let choice = readline.question('Would you play to play again? (Y/N): ').toLowerCase();
-    while (choice !== 'y' && choice !== 'n') {
-      choice = readline.question("Invalid Response. Please enter 'Y' to play again or 'N' to exit.: ").toLowerCase();
+    while (!['y', 'yes', 'n', 'no'].includes(choice)) {
+      choice = readline.question("Invalid Response. Please enter 'Yes' / 'Y' to play again, enter or 'No' / 'N' to exit.: ").toLowerCase();
     }
 
-    if (choice === 'y') {
+    if (choice === 'y' || choice === 'yes') {
       this.resetBoard();
     }
 
-    return choice === 'y';
+    return ['y', 'yes'].includes(choice);
   }
 
   resetBoard() {
@@ -209,15 +207,15 @@ class TTTGame {
 
   promptToStart() {
     let response = readline.question("Enter 'S' to start the match or 'Q' to quit.: ").toLowerCase();
-    while (response !== 's' && response !== 'q') {
-      response = readline.question("Invalid Response. Please enter 'S' to start the match or 'Q' to quit the game.: ").toLowerCase();
+    while (!['s', 'start', 'q', 'quit'].includes(response)) {
+      response = readline.question("Invalid Response. Please enter 'S' or 'Start' to start the match, or enter 'Q' or 'Quit' to quit the game.: ").toLowerCase();
     }
     return response;
   }
 
   displayWelcomeMessage() {
     console.log("");
-    console.log("Welcome to Tic Tac Toe! The first to 3 between you and the computer will win the game!");
+    console.log(`Welcome to Tic Tac Toe! The first to ${TTTGame.SCORE_LIMIT} between you and the computer will win the game!`);
     console.log("");
     console.log("     |     |");
     console.log("  X  |  O  |  X");
@@ -254,9 +252,11 @@ class TTTGame {
   displayMatchResult() {
     if (this.isMatchWinner(this.human)) {
       console.log("You won the match! Congratulations!");
-    } else {
+    } else if (this.isMatchWinner(this.computer)) {
       console.log("I won the match! Take that, human!");
     }
+
+    console.log(`Final Score: You ${this.scores['You']} | Computer ${this.scores['Computer']}`);
   }
 
   joinOr(arr, delimiter = ', ', joinWord = 'or') {
@@ -265,6 +265,18 @@ class TTTGame {
       case 2: return arr.join(` ${joinWord} `);
       default: return arr.slice(0, arr.length - 1).join(delimiter) +
                       `${delimiter}${joinWord} ${arr[arr.length - 1]}`;
+    }
+  }
+
+  togglePlayer(currentPlayer) {
+    return currentPlayer === this.human ? this.computer : this.human;
+  }
+
+  playerMoves(currentPlayer) {
+    if (currentPlayer === this.human) {
+      this.humanMoves();
+    } else {
+      this.computerMoves();
     }
   }
 
