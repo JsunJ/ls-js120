@@ -316,11 +316,11 @@ class TTTGame {
   }
 
   computerDefensiveMove() {
-    return this.findSquareOfInterestKey('defensive');
+    return this.findSquareOfInterestKey(this.human);
   }
 
   computerOffensiveMove() {
-    return this.findSquareOfInterestKey('offensive');
+    return this.findSquareOfInterestKey(this.computer);
   }
 
   computerMiddleMove() {
@@ -339,30 +339,21 @@ class TTTGame {
     return choice;
   }
 
-  findSquareOfInterestKey(posture) {
+  findSquareOfInterestKey(player) {
     for (let index = 0; index < TTTGame.POSSIBLE_WINNING_ROWS.length; index++) {
       let currentRow = TTTGame.POSSIBLE_WINNING_ROWS[index];
-      let currentKey = this.determineSquareOfInterest(posture, currentRow);
+      let currentKey = this.determineSquareOfInterest(player, currentRow);
       if (currentKey) return currentKey;
     }
     return null;
   }
 
-  determineSquareOfInterest(posture, row) {
-    if (posture === 'defensive') {
-      if (this.board.countMarkersFor(this.human, row) === 2) {
-        let squareOfInterestKey = row.find(key => {
-          return this.board.isUnusedSquare(key);
-        });
-        if (squareOfInterestKey) return squareOfInterestKey;
-      }
-    } else if (posture === 'offensive') {
-      if (this.board.countMarkersFor(this.computer, row) === 2) {
-        let squareOfInterestKey = row.find(key => {
-          return this.board.isUnusedSquare(key);
-        });
-        if (squareOfInterestKey) return squareOfInterestKey;
-      }
+  determineSquareOfInterest(player, row) {
+    if (this.board.countMarkersFor(player, row) === 2) {
+      let squareOfInterestKey = row.find(key => {
+        return this.board.isUnusedSquare(key);
+      });
+      if (squareOfInterestKey) return squareOfInterestKey;
     }
     return null;
   }
