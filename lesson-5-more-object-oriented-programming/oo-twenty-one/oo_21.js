@@ -49,6 +49,7 @@ class Deck {
 class Player {
   static STARTING_PURSE = 5;
   static WINNING_PURSE = 10;
+  static LOSING_PURSE = 0;
 
   constructor() {
     this.purse = Player.STARTING_PURSE;
@@ -60,7 +61,7 @@ class Player {
   }
 
   isBroke() {
-    return this.purse <= 0;
+    return this.purse <= Player.LOSING_PURSE;
   }
 }
 
@@ -71,9 +72,11 @@ class Dealer {
 }
 
 class TwentyOneGame {
-  static PURSE_LIMIT = 10;
   static BUST_LIMIT = 21;
   static DEALER_HIT_LIMIT = 17;
+  static BET = 1;
+  static HIT = 'h';
+  static STAY = 's';
 
   constructor() {
     this.player = new Player();
@@ -86,14 +89,35 @@ class TwentyOneGame {
     if (['q', 'quit'].includes(this.promptToStart())) return;
 
     while (true) {
-      this.displayPurse();
       this.playRound();
 
-      this.displayResult();
+      // play again to rich or broke
+      // play again?
+      // - new deck
+      // - clear hands
 
-      break;
+      break; // play one round
     }
+
     this.displayGoodbyeMessage();
+  }
+
+  playRound() {
+    console.clear();
+    this.displayPurse();
+    this.deck = new Deck();
+    this.dealCards();
+    this.displayHands();
+
+    this.playerTurn();
+    if (!this.isBusted(this.player)) {
+      this.refreshRevealedHandDisplay();
+      this.dealerTurn();
+    }
+
+    this.payoutOrCollect();
+    this.refreshRevealedHandDisplay();
+    this.displayResult();
   }
 
   dealCards() {
@@ -107,27 +131,31 @@ class TwentyOneGame {
     player.hand.push(this.deck.deal());
   }
 
-  displayHands() {
-    console.log('');
-    console.log(` Dealer's Hand: *HIDDEN CARD* |${this.dealer.hand.slice(1, this.dealer.hand.length)}`);
-    console.log('');
-    console.log(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -');
-    console.log('');
-    console.log(` Your Hand:${this.player.hand.join(' |')}`);
-    this.displayHandValue(this.player);
-    console.log('');
+  clearHands() {
+    this.player.hand = [];
+    this.dealer.hand = [];
   }
 
-  displayFinalHands() {
+  displayHands() {
     console.log('');
-    console.log(` Dealer Hand:${this.dealer.hand.join(' |')}`);
-    this.displayHandValue(this.dealer);
+    console.log(' Total: ~');
+    console.log(` Dealer's Hand: !HIDDEN CARD! |${this.dealer.hand.slice(1, this.dealer.hand.length)}`);
     console.log('');
     console.log(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -');
     console.log('');
     console.log(` Your Hand:${this.player.hand.join(' |')}`);
     this.displayHandValue(this.player);
+  }
+
+  displayRevealedHands() {
     console.log('');
+    this.displayHandValue(this.dealer);
+    console.log(` Dealer Hand:${this.dealer.hand.join(' |')}`);
+    console.log('');
+    console.log(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -');
+    console.log('');
+    console.log(` Your Hand:${this.player.hand.join(' |')}`);
+    this.displayHandValue(this.player);
   }
 
   displayHandValue(player) {
@@ -156,51 +184,83 @@ class TwentyOneGame {
   }
 
   playerTurn() {
-
+    while (this.hitOrStay() === TwentyOneGame.HIT) {
+      this.hit(this.player);
+      this.refreshHandDisplay();
+      if (this.isBusted(this.player)) {
+        console.log('You busted!');
+        this.promptToContinue();
+        break;
+      }
+    }
   }
 
   dealerTurn() {
-    //STUB
+    let hitCount = 0;
+
+    while (true) {
+      let handValue = this.getHandValue(this.dealer);
+
+      if (handValue >= TwentyOneGame.DEALER_HIT_LIMIT) {
+        console.log(`\nThe dealer stayed after ${hitCount} hit(s).`);
+        this.promptToContinue();
+        break;
+      }
+
+      this.hit(this.dealer);
+      hitCount += 1;
+      this.refreshRevealedHandDisplay();
+
+      if (this.isBusted(this.dealer)) {
+        console.log(`\nThe dealer busted after ${hitCount} hit(s)!`);
+        this.promptToContinue();
+        break;
+      }
+    }
   }
 
   isBusted(player) {
     return this.getHandValue(player) > TwentyOneGame.BUST_LIMIT;
   }
 
-  playRound() {
-    this.deck = new Deck();
-    this.dealCards();
-    this.displayHands();
-    this.playerTurn();
-    this.dealerTurn();
-
-
-  }
-
   hitOrStay() {
-    prompt('Hit or Stay?');
+    this.prompt('Hit or Stay?');
     let answer = readline.question().toLowerCase();
     while (!['h', 'hit', 's', 'stay'].includes(answer)) {
-      prompt("Invalid choice. Please enter 'h' or 'hit' to hit, or enter 's' or 'stay' to stay.");
+      this.prompt("Invalid choice. Please enter 'h' or 'hit' to hit, or enter 's' or 'stay' to stay.");
       answer = readline.question().toLowerCase();
     }
+    if (answer === 'hit' || answer === 'h') return TwentyOneGame.HIT;
     return answer;
   }
 
   displayWelcomeMessage() {
     console.log('Welcome to Twenty-One!');
     this.displayCardArt();
-    console.log('You will be given a starting purse of $5.');
-    console.log('Each hand is worth $1. Get rich ($10) to win or go broke ($0) to lose!');
+    console.log('You will be given a starting purse of $5 on the house.');
+    console.log('Each hand is worth $1. Get rich ($10) to win or go broke ($0) and go home!');
   }
 
   displayCardArt() {
+    console.log('');
     console.log("+-----+ +-----+");
     console.log(`|  A  | |  Q  |`);
-    console.log("|     | |     |");
+    console.log("|     | |     |  =  21");
     console.log(`|  ${Card.SYMBOLS[2]}  | |  ${Card.SYMBOLS[3]}  |`);
     console.log("+-----+ +-----+");
     console.log('');
+  }
+
+  refreshHandDisplay() {
+    console.clear();
+    this.displayPurse();
+    this.displayHands();
+  }
+
+  refreshRevealedHandDisplay() {
+    console.clear();
+    this.displayPurse();
+    this.displayRevealedHands();
   }
 
   displayPurse() {
@@ -211,12 +271,45 @@ class TwentyOneGame {
     console.log('Thank you for playing Twenty-One! Goodbye!');
   }
 
+  determineRoundWinner() {
+    if (this.isBusted(this.player)) return this.dealer;
+    if (this.isBusted(this.dealer)) return this.player;
+
+    let playerTotal = this.getHandValue(this.player);
+    let dealerTotal = this.getHandValue(this.dealer);
+
+    if (playerTotal > dealerTotal) {
+      return this.player;
+    } else if (playerTotal < dealerTotal) {
+      return this.dealer;
+    } else {
+      return 'tie';
+    }
+  }
+
   displayResult() {
-    //STUB
+    switch (this.determineRoundWinner()) {
+      case this.player:
+        console.log('\nYou win this hand!');
+        break;
+      case this.dealer:
+        console.log('\nThe dealer wins this hand!');
+        break;
+      case 'tie':
+        console.log("\nTie!");
+    }
+  }
+
+  payoutOrCollect() {
+    if (this.determineRoundWinner() === this.player) {
+      this.player.purse += TwentyOneGame.BET;
+    } else if (this.determineRoundWinner() === this.dealer) {
+      this.player.purse -= TwentyOneGame.BET;
+    }
   }
 
   prompt(msg) {
-    console.log(`=> ${msg}`);
+    console.log(`\n=> ${msg}`);
   }
 
   clearLastLine() {
@@ -225,12 +318,27 @@ class TwentyOneGame {
   }
 
   promptToStart() {
-    let response = readline.question("=> Enter 'S' to play or 'Q' to quit.: ").toLowerCase();
-    while (!['s', 'start', 'q', 'quit'].includes(response)) {
-      response = readline.question("Invalid Response. Please enter 'S' or 'Start' to play, or enter 'Q' or 'Quit' to quit.: ").toLowerCase();
+    this.prompt("Enter 'P' to play or 'Q' to quit.");
+    let response = readline.question().toLowerCase();
+    while (!['p', 'play', 'q', 'quit'].includes(response)) {
+      this.prompt("Invalid response. Please enter 'P' or 'Play' to play, or enter 'Q' or 'Quit' to quit.");
+      response = readline.question().toLowerCase();
     }
     return response;
   }
+
+  promptToContinue() {
+    this.prompt("Enter 'C' to continue...");
+    let response = readline.question().toLowerCase();
+    while (!['c', 'continue'].includes(response)) {
+      this.prompt("Invalid response. Please enter 'C' or 'Continue' to continue...");
+      response = readline.question().toLowerCase();
+    }
+  }
+
+  // play again
+
+  // 
 }
 
 let game = new TwentyOneGame();
