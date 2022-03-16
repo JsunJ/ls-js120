@@ -9,12 +9,18 @@ class Card {
   constructor(suit, rank) {
     this.suit = suit;
     this.rank = rank;
-    this.hidden = false;
   }
 
   toString() {
-    if (this.isHidden()) return "Hidden";
-    return `${this.getRank()} of ${this.getSuit()}`;
+    return ` ${this.getRank()} of ${this.getSuit()}`;
+  }
+
+  getRank() {
+    return this.rank;
+  }
+
+  getSuit() {
+    return this.suit;
   }
 }
 
@@ -34,6 +40,10 @@ class Deck {
   shuffleCards() {
     shuffle(this.cards);
   }
+
+  deal() {
+    return this.cards.pop();
+  }
 }
 
 class Player {
@@ -45,20 +55,12 @@ class Player {
     this.hand = [];
   }
 
-  hit() {
-    //STUB
+  isRich() {
+    return this.purse >= Player.WINNING_PURSE;
   }
 
-  stay() {
-    //STUB
-  }
-
-  isBusted() {
-    //STUB
-  }
-
-  score() {
-    //STUB
+  isBroke() {
+    return this.purse <= 0;
   }
 }
 
@@ -66,40 +68,14 @@ class Dealer {
   constructor() {
     this.hand = [];
   }
-
-  hit() {
-    //STUB
-  }
-
-  stay() {
-    //STUB
-  }
-
-  isBusted() {
-    //STUB
-  }
-
-  score() {
-    //STUB
-  }
-
-  hide() {
-    //STUB
-  }
-
-  reveal() {
-    //STUB
-  }
-
-  deal() {
-    //STUB
-    // does the dealer or the deck deal?
-  }
 }
 
 class TwentyOneGame {
+  static PURSE_LIMIT = 10;
+  static BUST_LIMIT = 21;
+  static DEALER_HIT_LIMIT = 17;
+
   constructor() {
-    this.deck = new Deck();
     this.player = new Player();
     this.dealer = new Dealer();
   }
@@ -109,31 +85,106 @@ class TwentyOneGame {
     this.displayWelcomeMessage();
     if (['q', 'quit'].includes(this.promptToStart())) return;
 
-    this.displayPurse();
+    while (true) {
+      this.displayPurse();
+      this.playRound();
 
-    this.dealCards();
-    this.showCards();
-    this.playerTurn();
-    this.dealerTurn();
-    this.displayResult();
+      this.displayResult();
 
+      break;
+    }
     this.displayGoodbyeMessage();
   }
 
   dealCards() {
-    //STUB
+    this.player.hand.push(this.deck.deal());
+    this.dealer.hand.push(this.deck.deal());
+    this.player.hand.push(this.deck.deal());
+    this.dealer.hand.push(this.deck.deal());
   }
 
-  showCards() {
-    //STUB
+  hit(player) {
+    player.hand.push(this.deck.deal());
+  }
+
+  displayHands() {
+    console.log('');
+    console.log(` Dealer's Hand: *HIDDEN CARD* |${this.dealer.hand.slice(1, this.dealer.hand.length)}`);
+    console.log('');
+    console.log(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -');
+    console.log('');
+    console.log(` Your Hand:${this.player.hand.join(' |')}`);
+    this.displayHandValue(this.player);
+    console.log('');
+  }
+
+  displayFinalHands() {
+    console.log('');
+    console.log(` Dealer Hand:${this.dealer.hand.join(' |')}`);
+    this.displayHandValue(this.dealer);
+    console.log('');
+    console.log(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -');
+    console.log('');
+    console.log(` Your Hand:${this.player.hand.join(' |')}`);
+    this.displayHandValue(this.player);
+    console.log('');
+  }
+
+  displayHandValue(player) {
+    console.log(` Total: ${this.getHandValue(player)}`);
+  }
+
+  getHandValue(player) {
+    let cardValues = player.hand.map(card => card.rank);
+
+    let cardSum = 0;
+    cardValues.forEach(value => {
+      if (value === 'Ace') {
+        cardSum += 11;
+      } else if (['Jack', 'Queen', 'King'].includes(value)) {
+        cardSum += 10;
+      } else {
+        cardSum += Number(value);
+      }
+    });
+
+    cardValues.filter(value => value === 'A').forEach(_ => {
+      if (cardSum > TwentyOneGame.BUST_LIMIT) cardSum -= 10;
+    });
+
+    return cardSum;
   }
 
   playerTurn() {
-    //STUB
+
   }
 
   dealerTurn() {
     //STUB
+  }
+
+  isBusted(player) {
+    return this.getHandValue(player) > TwentyOneGame.BUST_LIMIT;
+  }
+
+  playRound() {
+    this.deck = new Deck();
+    this.dealCards();
+    this.displayHands();
+    this.playerTurn();
+    this.dealerTurn();
+
+
+  }
+
+  hitOrStay() {
+    prompt('Hit or Stay?');
+    let answer = readline.question().toLowerCase();
+    while (!['h', 'hit', 's', 'stay'].includes(answer)) {
+      prompt("Invalid choice. Please enter 'h' or 'hit' to hit, or enter 's' or 'stay' to stay.");
+      answer = readline.question().toLowerCase();
+    }
+    return answer;
   }
 
   displayWelcomeMessage() {
@@ -162,6 +213,10 @@ class TwentyOneGame {
 
   displayResult() {
     //STUB
+  }
+
+  prompt(msg) {
+    console.log(`=> ${msg}`);
   }
 
   clearLastLine() {
