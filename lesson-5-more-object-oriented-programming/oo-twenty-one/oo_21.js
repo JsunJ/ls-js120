@@ -89,23 +89,32 @@ class TwentyOneGame {
     if (['q', 'quit'].includes(this.promptToStart())) return;
 
     while (true) {
-      this.playRound();
-
-      // play again to rich or broke
-      // play again?
-      // - new deck
-      // - clear hands
-
-      break; // play one round
+      this.playSet();
+      if (!this.playNewGame()) break;
     }
 
     this.displayGoodbyeMessage();
   }
 
+  playSet() {
+    while (true) {
+      this.playRound();
+      if (this.player.isBroke()) {
+        console.log("\nYou're broke!");
+        break;
+      } else if (this.player.isRich()) {
+        console.log("\nYou're rich!");
+        break;
+      }
+      if (!this.playNewRound()) break;
+    }
+  }
+
   playRound() {
     console.clear();
     this.displayPurse();
-    this.deck = new Deck();
+    this.clearHands();
+    this.newDeck(); // "Shuffle" the deck after every round when playing single-deck.
     this.dealCards();
     this.displayHands();
 
@@ -118,6 +127,10 @@ class TwentyOneGame {
     this.payoutOrCollect();
     this.refreshRevealedHandDisplay();
     this.displayResult();
+  }
+
+  newDeck() {
+    this.deck = new Deck();
   }
 
   dealCards() {
@@ -268,7 +281,7 @@ class TwentyOneGame {
   }
 
   displayGoodbyeMessage() {
-    console.log('Thank you for playing Twenty-One! Goodbye!');
+    console.log('\nThank you for playing Twenty-One! Goodbye!');
   }
 
   determineRoundWinner() {
@@ -336,9 +349,33 @@ class TwentyOneGame {
     }
   }
 
-  // play again
+  playNewRound() {
+    this.prompt('Would you like to play another hand? (Y/N)');
+    let response = readline.question().toLowerCase();
+    while (!['y', 'yes', 'n', 'no'].includes(response)) {
+      this.prompt("Invalid Response. Please enter 'Yes' or 'Y' to continue playing, or enter 'No' or 'N' to exit.");
+      response = readline.question().toLowerCase();
+    }
 
-  // 
+    return ['y', 'yes'].includes(response);
+  }
+
+  playNewGame() {
+    this.prompt("Would you like to start the game over? The house will reset your purse to $5.");
+    let response = readline.question().toLowerCase();
+    while (!['y', 'yes', 'n', 'no'].includes(response)) {
+      this.prompt("Invalid Response. Please enter 'Yes' or 'Y' to play again, or enter 'No' or 'N' to exit.");
+      response = readline.question().toLowerCase();
+    }
+
+    if (response === 'y' || response === 'yes') {
+      this.player.purse = Player.STARTING_PURSE;
+    }
+
+    return ['y', 'yes'].includes(response);
+  }
+
+  //
 }
 
 let game = new TwentyOneGame();
