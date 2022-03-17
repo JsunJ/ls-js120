@@ -114,7 +114,7 @@ class TwentyOneGame {
     console.clear();
     this.displayPurse();
     this.clearHands();
-    this.newDeck(); // "Shuffle" the deck after every round when playing single-deck.
+    this.newDeck(); // "Shuffle" the deck after every hand when playing single-deck.
     this.dealCards();
     this.displayHands();
 
@@ -374,8 +374,6 @@ class TwentyOneGame {
 
     return ['y', 'yes'].includes(response);
   }
-
-  //
 }
 
 let game = new TwentyOneGame();
